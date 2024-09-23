@@ -1,0 +1,50 @@
+FROM jenkins/jenkins:lts-jdk17
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    lsb-release \
+    curl \
+    gnupg2 \
+    pass
+
+# Install Docker CLI
+
+RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
+    https://download.docker.com/linux/debian/gpg
+
+RUN echo "deb [arch=$(dpkg --print-architecture) \
+    signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
+    https://download.docker.com/linux/debian \
+    $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+
+RUN apt-get update && apt-get install -y docker-ce-cli
+
+# Download and install docker-credential-pass
+
+RUN curl -L -o /usr/local/bin/docker-credential-pass \
+    https://github.com/docker/docker-credential-helpers/releases/download/v0.8.2/docker-credential-pass-v0.8.2.linux-amd64 && \
+    chmod +x /usr/local/bin/docker-credential-pass
+
+USER jenkins
+
+# Generate a GPG Key
+
+RUN gpg --batch --gen-key <<EOF
+Key-Type: default
+Key-Length: 2048
+Subkey-Type: default
+Subkey-Length: 2048
+Name-Real: Jenkins
+Name-Comment: Jenkins GPG key for Docker credentials
+Name-Email: jenkins@localhost
+Expire-Date: 0
+%no-protection
+%commit
+EOF
+
+RUN mkdir -p /var/jenkins_home/.docker && \
+    gpg_key_id=$(gpg --list-keys --with-colons | grep '^pub' | cut -d':' -f5 | head -n 1) && \
+    pass init "$gpg_key_id"
+
+RUN echo '{ "credsStore": "pass" }' > /var/jenkins_home/.docker/config.json
