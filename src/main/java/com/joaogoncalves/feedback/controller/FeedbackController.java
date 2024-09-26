@@ -1,107 +1,93 @@
 package com.joaogoncalves.feedback.controller;
 
 
-import com.joaogoncalves.feedback.entity.Feedback;
 import com.joaogoncalves.feedback.model.FeedbackCreate;
 import com.joaogoncalves.feedback.model.FeedbackListRead;
 import com.joaogoncalves.feedback.model.FeedbackRead;
-import com.joaogoncalves.feedback.repository.FeedbackRepository;
+import com.joaogoncalves.feedback.model.FeedbackUpdate;
+import com.joaogoncalves.feedback.service.FeedbackService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.UUID;
+
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping("/feedback")
+@RequestMapping("/api/feedbacks")
+@Validated
+@Slf4j
 public class FeedbackController {
 
     @Autowired
-    private FeedbackRepository feedbackRepository;
+    private FeedbackService feedbackService;
 
-    @PostMapping
-    public ResponseEntity<Void> createFeedback(@RequestBody FeedbackCreate request) {
-        Feedback feedback = new Feedback(
-                request.getRating(),
-                request.getFeedback(),
-                request.getCustomer(),
-                request.getProduct(),
-                request.getVendor()
-        );
-
-        Feedback savedFeedback = feedbackRepository.save(feedback);
-
-        URI location = URI.create(String.format("/feedback/%s", savedFeedback.getId()));
-
-        return ResponseEntity.created(location).build();  // HTTP 201 Created with Location header
+    @PostMapping(path="/new", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Void> create(@RequestBody @Valid FeedbackCreate feedbackCreate) {
+        log.info("Creating feedback");
+        FeedbackRead feedbackRead = feedbackService.create(feedbackCreate);
+        URI location = URI.create(String.format("/feedback/%s", feedbackRead.getId()));
+        return ResponseEntity.created(location).build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getFeedbackById(@PathVariable String id) {
-        Optional<Feedback> feedbackOptional = feedbackRepository.findById(id);
+    @GetMapping(path="/{id}", produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<FeedbackRead> read(@PathVariable final UUID id) {
+        log.info("Reading feedback [ID: {}]", id);
+        return ResponseEntity.ok(feedbackService.read(id));
+    }
 
-        if (feedbackOptional.isPresent()) {
-            Feedback feedback = feedbackOptional.get();
-            return ResponseEntity.ok(
-                    new FeedbackRead(
-                            feedback.getId(),
-                            feedback.getRating(),
-                            feedback.getFeedback(),
-                            feedback.getCustomer(),
-                            feedback.getProduct(),
-                            feedback.getVendor()
-                    )
-            );
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @PutMapping(path = "/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<FeedbackRead> update(
+            @PathVariable final UUID id,
+            @RequestBody @Valid final FeedbackUpdate feedbackUpdate) {
+        log.info("Updating feedback [ID: {}]", id);
+        return ResponseEntity.ok(feedbackService.update(id, feedbackUpdate));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> delete(@PathVariable final UUID id) {
+        log.info("Deleting feedback [ID: {}]", id);
+        feedbackService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<FeedbackListRead> getAllFeedback(
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<FeedbackListRead> search(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "perPage", defaultValue = "10") int perPage,
             @RequestParam(value = "rating", required = false) Optional<Integer> rating,
             @RequestParam(value = "customer", required = false) Optional<String> customer,
             @RequestParam(value = "product", required = false) Optional<String> product,
             @RequestParam(value = "vendor", required = false) Optional<String> vendor) {
-        if (page < 1) {
-            page = 1;
-        }
-        if (perPage < 5 || perPage > 20) {
-            perPage = 10;
-        }
-        Pageable pageable = PageRequest.of(page - 1, perPage, Sort.by(Sort.Direction.DESC, "_id"));
-        Page<Feedback> feedbackPage = feedbackRepository.findByFilters(rating, customer, product, vendor, pageable);
-        List<FeedbackRead> feedbackResponses = feedbackPage.getContent().stream()
-                .map(feedback -> new FeedbackRead(
-                        feedback.getId(),
-                        feedback.getRating(),
-                        feedback.getFeedback(),
-                        feedback.getCustomer(),
-                        feedback.getProduct(),
-                        feedback.getVendor()))
-                .collect(Collectors.toList());
-        FeedbackListRead response = new FeedbackListRead(
-                feedbackPage.getTotalElements(),
-                feedbackPage.isFirst(),
-                feedbackPage.isLast(),
-                feedbackResponses
+        log.info("Searching recipes [page: {}] [perPage: {}] [rating: {}] [customer: {}] [product: {}] [vendor: {}]",
+            page,
+            perPage,
+            rating,
+            customer,
+            product,
+            vendor
         );
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(feedbackService.search(page, perPage, rating, customer, product, vendor));
     }
-
 }

@@ -1,75 +1,48 @@
 package com.joaogoncalves.feedback.model;
 
-import org.jetbrains.annotations.NotNull;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ApiModel(description = "List with feedbacks information.")
 public class FeedbackRead {
-    private String id;
+
+    @ApiModelProperty(notes = "The feedback ID")
+    @NotBlank
+    private UUID id;
+
+    @ApiModelProperty(notes = "The feedback rating")
     @NotNull
     private int rating;
+
+    @ApiModelProperty(notes = "The feedback")
+    @NotBlank(message = "Feedback cannot be blank")
     private String feedback;
+
+    @ApiModelProperty(notes = "The customer name")
+    @NotBlank(message = "Customer cannot be blank")
+    @Size(max = 50)
     private String customer;
-    @NotNull
+
+    @ApiModelProperty(notes = "The product name")
+    @NotBlank(message = "Product cannot be blank")
+    @Size(max = 50)
     private String product;
-    @NotNull
+
+    @ApiModelProperty(notes = "The vendor name")
+    @NotBlank(message = "Vendor cannot be blank")
+    @Size(max = 50)
     private String vendor;
-
-    public FeedbackRead() {}
-
-    public FeedbackRead(String id, @NotNull int rating, String feedback, String customer, @NotNull String product, @NotNull String vendor) {
-        this.id = id;
-        this.rating = rating;
-        this.feedback = feedback;
-        this.customer = customer;
-        this.product = product;
-        this.vendor = vendor;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @NotNull
-    public int getRating() {
-        return rating;
-    }
-
-    public void setRating(@NotNull int rating) {
-        this.rating = rating;
-    }
-
-    public String getFeedback() {
-        return feedback;
-    }
-
-    public void setFeedback(String feedback) {
-        this.feedback = feedback;
-    }
-
-    public String getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(String customer) {
-        this.customer = customer;
-    }
-
-    public @NotNull String getProduct() {
-        return product;
-    }
-
-    public void setProduct(@NotNull String product) {
-        this.product = product;
-    }
-
-    public @NotNull String getVendor() {
-        return vendor;
-    }
-
-    public void setVendor(@NotNull String vendor) {
-        this.vendor = vendor;
-    }
 }

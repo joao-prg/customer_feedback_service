@@ -20,11 +20,11 @@ public class FeedbackRepositoryCustomImpl implements FeedbackRepositoryCustom {
     private MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Feedback> findByFilters(Optional<Integer> rating,
-                                        Optional<String> customer,
-                                        Optional<String> product,
-                                        Optional<String> vendor,
-                                        Pageable pageable) {
+    public Page<Feedback> findByFilters(final Optional<Integer> rating,
+                                        final Optional<String> customer,
+                                        final Optional<String> product,
+                                        final Optional<String> vendor,
+                                        final Pageable pageable) {
         Query query = new Query();
         rating.ifPresent(r -> query.addCriteria(Criteria.where("rating").is(r)));
         customer.ifPresent(c -> query.addCriteria(Criteria.where("customer").regex(c, "i")));

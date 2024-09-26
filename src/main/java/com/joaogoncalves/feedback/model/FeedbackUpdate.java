@@ -15,29 +15,24 @@ import javax.validation.constraints.Size;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel(description = "Information of the feedback to be created.")
-public class FeedbackCreate {
+@ApiModel(description = "Information of the feedback to be updated.")
+public class FeedbackUpdate {
 
     @ApiModelProperty(notes = "The feedback rating")
-    @NotNull
     private int rating;
 
     @ApiModelProperty(notes = "The feedback")
-    @NotBlank(message = "Feedback cannot be blank")
     private String feedback;
 
     @ApiModelProperty(notes = "The customer name")
-    @NotBlank(message = "Customer cannot be blank")
     @Size(max = 50)
     private String customer;
 
     @ApiModelProperty(notes = "The product name")
-    @NotBlank(message = "Product cannot be blank")
     @Size(max = 50)
     private String product;
 
     @ApiModelProperty(notes = "The vendor name")
-    @NotBlank(message = "Vendor cannot be blank")
     @Size(max = 50)
     private String vendor;
 }
