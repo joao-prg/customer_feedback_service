@@ -39,6 +39,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.20.1'
     testImplementation 'io.rest-assured:rest-assured'
     implementation 'org.flywaydb:flyway-core'
+    implementation 'com.auth0:java-jwt:3.19.1'
 }
 
 springBoot {
