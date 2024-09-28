@@ -1,11 +1,12 @@
 package com.joaogoncalves.feedback.security;
 
 import com.joaogoncalves.feedback.entity.User;
-import com.joaogoncalves.feedback.service.UserService;
+import com.joaogoncalves.feedback.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,31 +20,36 @@ import java.util.Optional;
 
 @Slf4j
 public class AccessTokenFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtHelper jwtHelper;
+
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        try {
-            Optional<String> accessToken = parseAccessToken(request);
-            if(accessToken.isPresent() && jwtHelper.validateAccessToken(accessToken.get())) {
-                String userId = jwtHelper.getUserIdFromAccessToken(accessToken.get());
-                User user = userService.findById(userId);
-                UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                upat.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(upat);
-            }
-        } catch (Exception e) {
-            log.error("cannot set authentication", e);
+    protected void doFilterInternal(
+            final HttpServletRequest request,
+            final HttpServletResponse response,
+            final FilterChain filterChain
+    ) throws ServletException, IOException {
+        final Optional<String> accessToken = parseAccessToken(request);
+        if(accessToken.isPresent() && jwtHelper.validateAccessToken(accessToken.get())) {
+            final String userId = jwtHelper.getUserIdFromAccessToken(accessToken.get());
+            final User user = userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            String.format("User not found! [Id: %s]", userId)
+                    ));
+            final UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            upat.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(upat);
         }
-
         filterChain.doFilter(request, response);
     }
 
-    private Optional<String> parseAccessToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+    private Optional<String> parseAccessToken(final HttpServletRequest request) {
+        final String authHeader = request.getHeader("Authorization");
         if(StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             return Optional.of(authHeader.replace("Bearer ", ""));
         }

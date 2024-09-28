@@ -23,20 +23,24 @@ public class FeedbackCreate {
     private int rating;
 
     @ApiModelProperty(notes = "The feedback")
+    @NotNull
     @NotBlank(message = "Feedback cannot be blank")
     private String feedback;
 
     @ApiModelProperty(notes = "The username")
+    @NotNull
     @NotBlank(message = "User cannot be blank")
     @Size(max = 30)
     private String user;
 
     @ApiModelProperty(notes = "The product name")
+    @NotNull
     @NotBlank(message = "Product cannot be blank")
     @Size(max = 30)
     private String product;
 
     @ApiModelProperty(notes = "The vendor name")
+    @NotNull
     @NotBlank(message = "Vendor cannot be blank")
     @Size(max = 30)
     private String vendor;

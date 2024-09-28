@@ -25,16 +25,19 @@ public class Feedback {
     @NotNull
     private int rating;
 
+    @NotNull
     @NotBlank(message = "Feedback cannot be blank")
     private String feedback;
 
     @DocumentReference(lookup = "{ 'username' : ?#{#target} }")
     private User user;
 
+    @NotNull
     @NotBlank(message = "Product cannot be blank")
     @Size(max = 30)
     private String product;
 
+    @NotNull
     @NotBlank(message = "Vendor cannot be blank")
     @Size(max = 30)
     private String vendor;

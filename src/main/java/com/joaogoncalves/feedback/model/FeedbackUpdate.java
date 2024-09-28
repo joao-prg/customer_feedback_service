@@ -24,10 +24,6 @@ public class FeedbackUpdate {
     @ApiModelProperty(notes = "The feedback")
     private String feedback;
 
-    @ApiModelProperty(notes = "The username")
-    @Size(max = 30)
-    private String user;
-
     @ApiModelProperty(notes = "The product name")
     @Size(max = 30)
     private String product;

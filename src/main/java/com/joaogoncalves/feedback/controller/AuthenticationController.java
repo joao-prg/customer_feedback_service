@@ -1,133 +1,66 @@
 package com.joaogoncalves.feedback.controller;
 
-import com.joaogoncalves.feedback.entity.RefreshToken;
-import com.joaogoncalves.feedback.entity.User;
-import com.joaogoncalves.feedback.model.TokenDTO;
+import com.joaogoncalves.feedback.model.TokenLogout;
+import com.joaogoncalves.feedback.model.TokenRefresh;
 import com.joaogoncalves.feedback.model.UserCreate;
 import com.joaogoncalves.feedback.model.UserLogin;
-import com.joaogoncalves.feedback.repository.RefreshTokenRepository;
-import com.joaogoncalves.feedback.repository.UserRepository;
-import com.joaogoncalves.feedback.security.JwtHelper;
-import com.joaogoncalves.feedback.service.UserService;
+import com.joaogoncalves.feedback.service.AuthenticationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.List;
+
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/api/auth")
+@Validated
+@Slf4j
 public class AuthenticationController {
 
     @Autowired
-    AuthenticationManager authenticationManager;
-    @Autowired
-    RefreshTokenRepository refreshTokenRepository;
-    @Autowired
-    UserRepository userRepository;
-    @Autowired
-    JwtHelper jwtHelper;
-    @Autowired
-    PasswordEncoder passwordEncoder;
-    @Autowired
-    UserService userService;
+    private AuthenticationService authenticationService;
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLogin dto) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        User user = (User) authentication.getPrincipal();
-
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
-        refreshTokenRepository.save(refreshToken);
-
-        String accessToken = jwtHelper.generateAccessToken(user);
-        String refreshTokenString = jwtHelper.generateRefreshToken(user, refreshToken);
-
-        return ResponseEntity.ok(new TokenDTO(user.getId(), accessToken, refreshTokenString));
+    @PostMapping(path="/login", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> login(@Valid @RequestBody final UserLogin userLogin) {
+        log.info("User [username: {}] is logging in", userLogin.getUsername());
+        return ResponseEntity.ok(
+                authenticationService.login(userLogin)
+        );
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody UserCreate dto) {
-        User user = new User(null, dto.getUsername(), dto.getEmail(), passwordEncoder.encode(dto.getPassword()), List.of());
-        userRepository.save(user);
-
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
-        refreshTokenRepository.save(refreshToken);
-
-        String accessToken = jwtHelper.generateAccessToken(user);
-        String refreshTokenString = jwtHelper.generateRefreshToken(user, refreshToken);
-
-        return ResponseEntity.ok(new TokenDTO(user.getId(), accessToken, refreshTokenString));
+    @PostMapping(path = "/signup", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<?> signup(@Valid @RequestBody final UserCreate userCreate) {
+        log.info("User [username: {}] is signing up", userCreate.getUsername());
+        return ResponseEntity.ok(
+                authenticationService.signup(userCreate)
+        );
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody TokenDTO dto) {
-        String refreshTokenString = dto.getRefreshToken();
-        if (jwtHelper.validateRefreshToken(refreshTokenString) && refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            refreshTokenRepository.deleteById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString));
-            return ResponseEntity.ok().build();
-        }
-
-        throw new BadCredentialsException("invalid token");
+    @PostMapping(path ="/logout", consumes = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<?> logout(@Valid @RequestBody TokenLogout tokenLogout) {
+        log.info("User [ID: {}] is logging out", tokenLogout.getUserId());
+        authenticationService.logout(tokenLogout);
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/logout-all")
-    public ResponseEntity<?> logoutAll(@RequestBody TokenDTO dto) {
-        String refreshTokenString = dto.getRefreshToken();
-        if (jwtHelper.validateRefreshToken(refreshTokenString) && refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            refreshTokenRepository.deleteById(jwtHelper.getUserIdFromRefreshToken(refreshTokenString));
-            return ResponseEntity.ok().build();
-        }
-
-        throw new BadCredentialsException("invalid token");
-    }
-
-    @PostMapping("/access-token")
-    public ResponseEntity<?> accessToken(@RequestBody TokenDTO dto) {
-        String refreshTokenString = dto.getRefreshToken();
-        if (jwtHelper.validateRefreshToken(refreshTokenString) && refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            User user = userService.findById(jwtHelper.getUserIdFromRefreshToken(refreshTokenString));
-            String accessToken = jwtHelper.generateAccessToken(user);
-
-            return ResponseEntity.ok(new TokenDTO(user.getId(), accessToken, refreshTokenString));
-        }
-
-        throw new BadCredentialsException("invalid token");
-    }
-
-    @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody TokenDTO dto) {
-        String refreshTokenString = dto.getRefreshToken();
-        if (jwtHelper.validateRefreshToken(refreshTokenString) && refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            // valid and exists in db
-
-            refreshTokenRepository.deleteById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString));
-
-            User user = userService.findById(jwtHelper.getUserIdFromRefreshToken(refreshTokenString));
-
-            RefreshToken refreshToken = new RefreshToken();
-            refreshToken.setUser(user);
-            refreshTokenRepository.save(refreshToken);
-
-            String accessToken = jwtHelper.generateAccessToken(user);
-            String newRefreshTokenString = jwtHelper.generateRefreshToken(user, refreshToken);
-
-            return ResponseEntity.ok(new TokenDTO(user.getId(), accessToken, newRefreshTokenString));
-        }
-
-        throw new BadCredentialsException("invalid token");
+    @PostMapping(path = "/refresh-token", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefresh tokenRefresh) {
+        log.info("User [ID: {}] is refreshing token", tokenRefresh.getUserId());
+        return ResponseEntity.ok(
+                authenticationService.refreshToken(tokenRefresh)
+        );
     }
 }

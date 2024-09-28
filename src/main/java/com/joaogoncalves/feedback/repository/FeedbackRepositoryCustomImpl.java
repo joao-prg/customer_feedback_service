@@ -25,14 +25,14 @@ public class FeedbackRepositoryCustomImpl implements FeedbackRepositoryCustom {
                                         final Optional<String> product,
                                         final Optional<String> vendor,
                                         final Pageable pageable) {
-        Query query = new Query();
+        final Query query = new Query();
         rating.ifPresent(r -> query.addCriteria(Criteria.where("rating").is(r)));
         customer.ifPresent(c -> query.addCriteria(Criteria.where("customer").regex(c, "i")));
         product.ifPresent(p -> query.addCriteria(Criteria.where("product").regex(p, "i")));
         vendor.ifPresent(v -> query.addCriteria(Criteria.where("vendor").regex(v, "i")));
-        long totalDocuments = mongoTemplate.count(query, Feedback.class);
+        final long totalDocuments = mongoTemplate.count(query, Feedback.class);
         query.with(pageable);
-        List<Feedback> feedbackList = mongoTemplate.find(query, Feedback.class);
+        final List<Feedback> feedbackList = mongoTemplate.find(query, Feedback.class);
         return new PageImpl<>(feedbackList, pageable, totalDocuments);
     }
 }

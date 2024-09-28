@@ -40,9 +40,13 @@ public class FeedbackController {
     @PostMapping(path="/new", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Void> create(@RequestBody @Valid FeedbackCreate feedbackCreate) {
-        log.info("Creating feedback");
-        FeedbackRead feedbackRead = feedbackService.create(feedbackCreate);
-        URI location = URI.create(String.format("/feedback/%s", feedbackRead.getId()));
+        log.info(
+                "User [username: {}] is creating feedback for product [product: {}]",
+                feedbackCreate.getUser(),
+                feedbackCreate.getProduct()
+        );
+        final FeedbackRead feedbackRead = feedbackService.create(feedbackCreate);
+        final URI location = URI.create(String.format("/feedback/%s", feedbackRead.getId()));
         return ResponseEntity.created(location).build();
     }
 
@@ -62,7 +66,7 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.update(id, feedbackUpdate));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> delete(@PathVariable String id) {
         log.info("Deleting feedback [ID: {}]", id);
@@ -70,23 +74,23 @@ public class FeedbackController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
+    @GetMapping(produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<FeedbackListRead> search(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "perPage", defaultValue = "10") int perPage,
             @RequestParam(value = "rating", required = false) Optional<Integer> rating,
-            @RequestParam(value = "customer", required = false) Optional<String> customer,
+            @RequestParam(value = "customer", required = false) Optional<String> user,
             @RequestParam(value = "product", required = false) Optional<String> product,
             @RequestParam(value = "vendor", required = false) Optional<String> vendor) {
-        log.info("Searching recipes [page: {}] [perPage: {}] [rating: {}] [customer: {}] [product: {}] [vendor: {}]",
+        log.info("Searching recipes [page: {}] [perPage: {}] [rating: {}] [user: {}] [product: {}] [vendor: {}]",
             page,
             perPage,
             rating,
-            customer,
+            user,
             product,
             vendor
         );
-        return ResponseEntity.ok(feedbackService.search(page, perPage, rating, customer, product, vendor));
+        return ResponseEntity.ok(feedbackService.search(page, perPage, rating, user, product, vendor));
     }
 }

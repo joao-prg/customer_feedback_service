@@ -27,12 +27,13 @@ public class UserCreate {
 
     @ApiModelProperty(notes = "User's e-mail")
     @NotNull
-    @Email(message = "Invalid email format")
     @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Invalid email format")
     private String email;
 
     @ApiModelProperty(notes = "User's password")
-    @Size(min = 8, max=30)
+    @NotNull
     @NotBlank(message = "Password cannot be blank")
+    @Size(min = 8, max=30)
     private String password;
 }

@@ -2,12 +2,14 @@ package com.joaogoncalves.feedback.service;
 
 import com.joaogoncalves.feedback.entity.User;
 import com.joaogoncalves.feedback.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class UserService implements UserDetailsService {
 
     @Autowired
@@ -15,14 +17,11 @@ public class UserService implements UserDetailsService {
 
     @Override
     public User loadUserByUsername(final String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
+        final User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                            String.format("User not found! [e-mail: %s]", username))
+                            String.format("User not found! [username: %s]", username))
                 );
-    }
-
-    public User findById(final String id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("user id not found"));
+        log.debug("User found successfully [username: {}]", user.getUsername());
+        return user;
     }
 }
