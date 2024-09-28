@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -59,7 +60,7 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody UserCreate dto) {
-        User user = new User(null, dto.getUsername(), dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
+        User user = new User(null, dto.getUsername(), dto.getEmail(), passwordEncoder.encode(dto.getPassword()), List.of());
         userRepository.save(user);
 
         RefreshToken refreshToken = new RefreshToken();

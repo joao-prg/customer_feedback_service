@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -27,15 +28,14 @@ public class Feedback {
     @NotBlank(message = "Feedback cannot be blank")
     private String feedback;
 
-    @NotBlank(message = "Customer cannot be blank")
-    @Size(max = 50)
-    private String customer;
+    @DocumentReference(lookup = "{ 'username' : ?#{#target} }")
+    private User user;
 
     @NotBlank(message = "Product cannot be blank")
-    @Size(max = 50)
+    @Size(max = 30)
     private String product;
 
     @NotBlank(message = "Vendor cannot be blank")
-    @Size(max = 50)
+    @Size(max = 30)
     private String vendor;
 }

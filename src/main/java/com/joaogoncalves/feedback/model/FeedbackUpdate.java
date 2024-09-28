@@ -24,15 +24,15 @@ public class FeedbackUpdate {
     @ApiModelProperty(notes = "The feedback")
     private String feedback;
 
-    @ApiModelProperty(notes = "The customer name")
-    @Size(max = 50)
-    private String customer;
+    @ApiModelProperty(notes = "The username")
+    @Size(max = 30)
+    private String user;
 
     @ApiModelProperty(notes = "The product name")
-    @Size(max = 50)
+    @Size(max = 30)
     private String product;
 
     @ApiModelProperty(notes = "The vendor name")
-    @Size(max = 50)
+    @Size(max = 30)
     private String vendor;
 }

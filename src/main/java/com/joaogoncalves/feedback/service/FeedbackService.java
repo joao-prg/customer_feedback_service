@@ -1,6 +1,7 @@
 package com.joaogoncalves.feedback.service;
 
 import com.joaogoncalves.feedback.entity.Feedback;
+import com.joaogoncalves.feedback.entity.User;
 import com.joaogoncalves.feedback.exception.FeedbackNotFoundException;
 import com.joaogoncalves.feedback.exception.InvalidPageException;
 import com.joaogoncalves.feedback.model.FeedbackCreate;
@@ -8,6 +9,7 @@ import com.joaogoncalves.feedback.model.FeedbackListRead;
 import com.joaogoncalves.feedback.model.FeedbackRead;
 import com.joaogoncalves.feedback.model.FeedbackUpdate;
 import com.joaogoncalves.feedback.repository.FeedbackRepository;
+import com.joaogoncalves.feedback.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,7 +21,6 @@ import org.modelmapper.ModelMapper;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +29,9 @@ public class FeedbackService {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -43,7 +47,12 @@ public class FeedbackService {
     }
 
     public FeedbackRead create(final FeedbackCreate feedbackCreate) {
+        final User user = userRepository.findByUsername(feedbackCreate.getUser())
+                .orElseThrow(() -> new FeedbackNotFoundException(
+                String.format("User not found! [Username: %s]", feedbackCreate.getUser())
+        ));;
         final Feedback feedbackToCreate = modelMapper.map(feedbackCreate, Feedback.class);
+        feedbackToCreate.setUser(user);
         final Feedback savedFeedback = feedbackRepository.save(feedbackToCreate);
         log.debug("Feedback saved successfully [ID: {}]", savedFeedback.getId());
         return modelMapper.map(savedFeedback, FeedbackRead.class);
