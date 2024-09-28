@@ -49,7 +49,7 @@ public class FeedbackController {
 
     @GetMapping(path="/{id}", produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<FeedbackRead> read(@PathVariable final UUID id) {
+    public ResponseEntity<FeedbackRead> read(@PathVariable final String id) {
         log.info("Reading feedback [ID: {}]", id);
         return ResponseEntity.ok(feedbackService.read(id));
     }
@@ -57,7 +57,7 @@ public class FeedbackController {
     @PutMapping(path = "/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<FeedbackRead> update(
-            @PathVariable final UUID id,
+            @PathVariable final String id,
             @RequestBody @Valid final FeedbackUpdate feedbackUpdate) {
         log.info("Updating feedback [ID: {}]", id);
         return ResponseEntity.ok(feedbackService.update(id, feedbackUpdate));
@@ -65,7 +65,7 @@ public class FeedbackController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> delete(@PathVariable final UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         log.info("Deleting feedback [ID: {}]", id);
         feedbackService.delete(id);
         return ResponseEntity.noContent().build();

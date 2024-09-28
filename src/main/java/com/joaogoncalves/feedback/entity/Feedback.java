@@ -20,7 +20,7 @@ import java.util.UUID;
 public class Feedback {
 
     @Id
-    private UUID id;
+    private String id;
 
     @NotNull
     private int rating;

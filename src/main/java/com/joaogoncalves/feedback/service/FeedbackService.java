@@ -32,7 +32,7 @@ public class FeedbackService {
     @Autowired
     private ModelMapper modelMapper;
 
-    private Feedback find(final UUID id) {
+    private Feedback find(final String id) {
         final Feedback recipe = feedbackRepository
                 .findById(id)
                 .orElseThrow(() -> new FeedbackNotFoundException(
@@ -49,12 +49,12 @@ public class FeedbackService {
         return modelMapper.map(savedFeedback, FeedbackRead.class);
     }
 
-    public FeedbackRead read(final UUID id) {
+    public FeedbackRead read(final String id) {
         final Feedback recipe = find(id);
         return modelMapper.map(recipe, FeedbackRead.class);
     }
 
-    public FeedbackRead update(final UUID id, final FeedbackUpdate feedbackUpdate) {
+    public FeedbackRead update(final String id, final FeedbackUpdate feedbackUpdate) {
         final Feedback feedback = find(id);
         modelMapper.map(feedbackUpdate, feedback);
         final Feedback updatedFeeback = feedbackRepository.save(feedback);
@@ -62,7 +62,7 @@ public class FeedbackService {
         return modelMapper.map(updatedFeeback, FeedbackRead.class);
     }
 
-    public void delete(final UUID id) {
+    public void delete(final String id) {
         final Feedback feedback = find(id);
         feedbackRepository.delete(feedback);
         log.debug(String.format("Recipe deleted successfully [ID: %s]", id));
