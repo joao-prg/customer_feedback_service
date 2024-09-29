@@ -3,7 +3,6 @@ package com.joaogoncalves.feedback.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.joaogoncalves.feedback.entity.RefreshToken;
 import com.joaogoncalves.feedback.entity.User;
@@ -12,22 +11,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Optional;
 
 @Component
 @Slf4j
 public class JwtHelper {
     static final String issuer = "customer-feedback-service";
 
-    private long accessTokenExpirationMs;
-    private long refreshTokenExpirationMs;
+    private final long accessTokenExpirationMs;
+    private final long refreshTokenExpirationMs;
 
-    private Algorithm accessTokenAlgorithm;
-    private Algorithm refreshTokenAlgorithm;
-    private JWTVerifier accessTokenVerifier;
-    private JWTVerifier refreshTokenVerifier;
+    private final Algorithm accessTokenAlgorithm;
+    private final Algorithm refreshTokenAlgorithm;
+    private final JWTVerifier accessTokenVerifier;
+    private final JWTVerifier refreshTokenVerifier;
 
-    public JwtHelper(@Value("${accessTokenSecret}") String accessTokenSecret, @Value("${refreshTokenSecret}") String refreshTokenSecret, @Value("${refreshTokenExpirationDays}") int refreshTokenExpirationDays, @Value("${accessTokenExpirationMinutes}") int accessTokenExpirationMinutes) {
+    public JwtHelper(@Value("${accessTokenSecret}") final String accessTokenSecret,
+                     @Value("${refreshTokenSecret}") final String refreshTokenSecret,
+                     @Value("${refreshTokenExpirationDays}") final int refreshTokenExpirationDays,
+                     @Value("${accessTokenExpirationMinutes}") final int accessTokenExpirationMinutes) {
         accessTokenExpirationMs = (long) accessTokenExpirationMinutes * 60 * 1000;
         refreshTokenExpirationMs = (long) refreshTokenExpirationDays * 24 * 60 * 60 * 1000;
         accessTokenAlgorithm = Algorithm.HMAC512(accessTokenSecret);
@@ -40,60 +41,46 @@ public class JwtHelper {
                 .build();
     }
 
-    public String generateAccessToken(User user) {
-        return JWT.create()
+    public String generateAccessToken(final User user) {
+        final String token =  JWT.create()
                 .withIssuer(issuer)
                 .withSubject(user.getId())
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(new Date().getTime() + accessTokenExpirationMs))
                 .sign(accessTokenAlgorithm);
+        log.debug("Generated access token for user [ID: {}]", user.getId());
+        return token;
     }
 
-    public String generateRefreshToken(User user, RefreshToken refreshToken) {
-        return JWT.create()
+    public String generateRefreshToken(final User user, final RefreshToken refreshToken) {
+        final String token = JWT.create()
                 .withIssuer(issuer)
                 .withSubject(user.getId())
                 .withClaim("tokenId", refreshToken.getId())
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date((new Date()).getTime() + refreshTokenExpirationMs))
                 .sign(refreshTokenAlgorithm);
+        log.debug("Generated refresh token for user [ID: {}]", user.getId());
+        return token;
     }
 
-    private Optional<DecodedJWT> decodeAccessToken(String token) {
-        try {
-            return Optional.of(accessTokenVerifier.verify(token));
-        } catch (JWTVerificationException e) {
-            log.error("invalid access token", e);
-        }
-        return Optional.empty();
+    private DecodedJWT decodeAccessToken(final String token) {
+        return accessTokenVerifier.verify(token);
     }
 
-    private Optional<DecodedJWT> decodeRefreshToken(String token) {
-        try {
-            return Optional.of(refreshTokenVerifier.verify(token));
-        } catch (JWTVerificationException e) {
-            log.error("invalid refresh token", e);
-        }
-        return Optional.empty();
+    private DecodedJWT decodeRefreshToken(final String token) {
+        return refreshTokenVerifier.verify(token);
     }
 
-    public boolean validateAccessToken(String token) {
-        return decodeAccessToken(token).isPresent();
+    public String getUserIdFromAccessToken(final String token) {
+        return decodeAccessToken(token).getSubject();
     }
 
-    public boolean validateRefreshToken(String token) {
-        return decodeRefreshToken(token).isPresent();
+    public String getUserIdFromRefreshToken(final String token) {
+        return decodeRefreshToken(token).getSubject();
     }
 
-    public String getUserIdFromAccessToken(String token) {
-        return decodeAccessToken(token).get().getSubject();
-    }
-
-    public String getUserIdFromRefreshToken(String token) {
-        return decodeRefreshToken(token).get().getSubject();
-    }
-
-    public String getTokenIdFromRefreshToken(String token) {
-        return decodeRefreshToken(token).get().getClaim("tokenId").asString();
+    public String getTokenIdFromRefreshToken(final String token) {
+        return decodeRefreshToken(token).getClaim("tokenId").asString();
     }
 }
