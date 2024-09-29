@@ -29,8 +29,8 @@ rebuild: clean build
 env:
 	@echo $(ADMIN_EMAIL)
 	@echo $(ADMIN_PASSWORD)
-	@echo $(POSTGRES_USER)
-	@echo $(POSTGRES_PASSWORD)
+	@echo $(MONGO_USER)
+	@echo $(MONGO_PASSWORD)
 
 .PHONY: docker-build
 docker-build:
@@ -38,11 +38,11 @@ docker-build:
 
 .PHONY: start-db
 start-db:
-	docker compose -f docker-compose-dev.yml up recipes_db -d
+	docker compose -f docker-compose-dev.yml up feedback_db -d
 
 .PHONY: start-docker
 start-docker:
-	docker compose -f docker-compose-dev.yml up customer_feedback_service recipes_db -d
+	docker compose -f docker-compose-dev.yml up customer_feedback_service feedback_db -d
 
 .PHONY: run-docker-tests
 run-docker-tests:

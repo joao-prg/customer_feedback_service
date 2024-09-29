@@ -4,6 +4,7 @@ import com.joaogoncalves.feedback.entity.Feedback;
 import com.joaogoncalves.feedback.entity.User;
 import com.joaogoncalves.feedback.exception.FeedbackNotFoundException;
 import com.joaogoncalves.feedback.exception.InvalidPageException;
+import com.joaogoncalves.feedback.exception.UserNotAuthorOfFeedbackException;
 import com.joaogoncalves.feedback.model.FeedbackCreate;
 import com.joaogoncalves.feedback.model.FeedbackListRead;
 import com.joaogoncalves.feedback.model.FeedbackRead;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
 
@@ -65,6 +68,17 @@ public class FeedbackService {
 
     public FeedbackRead update(final String id, final FeedbackUpdate feedbackUpdate) {
         final Feedback feedback = find(id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        if (!feedback.getUser().getUsername().equals(currentUsername)) {
+            throw new UserNotAuthorOfFeedbackException(
+                    String.format(
+                            "User %s is not the author of the feedback [Id: %s]",
+                            currentUsername,
+                            id
+                    )
+            );
+        }
         modelMapper.map(feedbackUpdate, feedback);
         final Feedback updatedFeeback = feedbackRepository.save(feedback);
         log.debug("Feedback updated successfully [ID: {}]", id);
