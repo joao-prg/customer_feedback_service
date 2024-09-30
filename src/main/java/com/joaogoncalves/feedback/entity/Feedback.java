@@ -16,7 +16,7 @@ import javax.validation.constraints.Size;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "feedback")
+@Document(collection = "feedbacks")
 public class Feedback {
 
     @Id

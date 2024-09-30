@@ -41,7 +41,7 @@ public class AccessTokenFilter extends OncePerRequestFilter {
         final String requestURI = request.getRequestURI();
         log.info("Processing request URI: {}", requestURI);
         for (String endpoint : PUBLIC_ENDPOINTS) {
-            if (requestURI.endsWith(endpoint.replace("**", ""))) {
+            if (requestURI.startsWith(endpoint.replace("**", ""))) {
                 log.info("Public endpoint matched [URI: {}]. Skipping token validation.", endpoint);
                 filterChain.doFilter(request, response);
                 return;

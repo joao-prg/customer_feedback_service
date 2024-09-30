@@ -42,9 +42,7 @@ public class AuthenticationController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> signup(@Valid @RequestBody final UserCreate userCreate) {
         log.info("User [username: {}] is signing up", userCreate.getUsername());
-        return ResponseEntity.ok(
-                authenticationService.signup(userCreate)
-        );
+        return new ResponseEntity<>(authenticationService.signup(userCreate), HttpStatus.CREATED);
     }
 
     @PostMapping(path ="/logout", consumes = APPLICATION_JSON_VALUE)
