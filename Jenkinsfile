@@ -42,7 +42,7 @@ pipeline {
                     withCredentials([
                         sshUserPrivateKey(credentialsId: 'REMOTE_SERVER_SSH_KEY', keyFileVariable: 'REMOTE_SERVER_SSH_KEY'),
                         usernamePassword(credentialsId: 'ADMIN_CREDENTIALS_ID', usernameVariable: 'ADMIN_EMAIL', passwordVariable: 'ADMIN_PASSWORD'),
-                        usernamePassword(credentialsId: 'DB_CREDENTIALS_ID', usernameVariable: 'POSTGRES_USER', passwordVariable: 'POSTGRES_PASSWORD'),
+                        usernamePassword(credentialsId: 'DB_CREDENTIALS_ID', usernameVariable: 'MONGO_USER', passwordVariable: 'MONGO_PASSWORD'),
                         string(credentialsId: 'REMOTE_SERVER_USER', variable: 'REMOTE_SERVER_USER'),
                         string(credentialsId: 'REMOTE_SERVER_IP', variable: 'REMOTE_SERVER_IP')
                       ]
@@ -51,8 +51,8 @@ pipeline {
                         set -e
                         export ADMIN_EMAIL=${ADMIN_EMAIL}
                         export ADMIN_PASSWORD=${ADMIN_PASSWORD}
-                        export POSTGRES_USER=${POSTGRES_USER}
-                        export POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+                        export MONGO_USER=${MONGO_USER}
+                        export MONGO_PASSWORD=${MONGO_PASSWORD}
                         docker-compose -f /home/${REMOTE_SERVER_USER}/customer_feedback_service/docker-compose-prod.yml down
                         docker-compose -f /home/${REMOTE_SERVER_USER}/customer_feedback_service/docker-compose-prod.yml up --build -d
                         """
