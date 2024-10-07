@@ -5,6 +5,7 @@ import com.joaogoncalves.feedback.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -68,10 +69,10 @@ public class AccessTokenFilter extends OncePerRequestFilter {
     private String parseAccessToken(@NotNull final HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
         if (!StringUtils.hasText(authHeader)) {
-            throw new IllegalArgumentException("Authorization header is missing");
+            throw new AuthenticationCredentialsNotFoundException("Authorization header is missing");
         }
         if (!authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Authorization header must start with 'Bearer '");
+            throw new AuthenticationCredentialsNotFoundException("Authorization header must start with 'Bearer '");
         }
         return authHeader.replace("Bearer ", "");
     }

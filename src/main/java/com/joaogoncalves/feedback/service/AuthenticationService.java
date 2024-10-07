@@ -1,5 +1,6 @@
 package com.joaogoncalves.feedback.service;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.joaogoncalves.feedback.entity.RefreshToken;
 import com.joaogoncalves.feedback.entity.User;
 import com.joaogoncalves.feedback.exception.UserAlreadyExistsException;
@@ -22,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.sql.Ref;
 
 @Service
 @Slf4j
@@ -56,7 +59,6 @@ public class AuthenticationService {
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(userLogin.getUsername(), userLogin.getPassword())
         );
-        log.info("User authenticated successfully [username: {}]", userLogin.getUsername());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final User user = (User) authentication.getPrincipal();
         final RefreshToken refreshToken = createRefreshToken(user);
@@ -79,25 +81,37 @@ public class AuthenticationService {
         return savedUser;
     }
 
-    public TokenRead signup(final UserCreate userCreate) {
-        final User user = createUser(userCreate);
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
-        refreshTokenRepository.save(refreshToken);
+    private TokenRead createTokens(final User user) {
+        final RefreshToken refreshToken = createRefreshToken(user);
         final String accessToken = jwtHelper.generateAccessToken(user);
         final String refreshTokenString = jwtHelper.generateRefreshToken(user, refreshToken);
-        log.info("User signed up successfully [username: {}]", user.getUsername());
         return new TokenRead(user.getId(), accessToken, refreshTokenString);
     }
 
-    public void logout(final TokenLogout tokenLogout) {
-        final String refreshTokenString = tokenLogout.getRefreshToken();
-        if (refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            refreshTokenRepository.deleteById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString));
-            return;
-        }
-        throw new BadCredentialsException("Invalid token");
+    public TokenRead signup(final UserCreate userCreate) {
+        final User user = createUser(userCreate);
+        final TokenRead tokens = createTokens(user);
+        log.info("User signed up successfully [username: {}]", user.getUsername());
+        return tokens;
     }
+
+    private void deleteRefreshToken(final String refreshTokenString, final String username) {
+        try {
+            final String tokenId = jwtHelper.getTokenIdFromRefreshToken(refreshTokenString);
+            if (refreshTokenRepository.existsById(tokenId)) {
+                refreshTokenRepository.deleteById(tokenId);
+                log.info("User logged out successfully [username: {}]", username);
+            }
+        } catch (JWTVerificationException e) {
+            log.error("JWT verification failed for user [username: {}]", username);
+            throw new BadCredentialsException("Invalid token");
+        }
+    }
+
+    public void logout(final TokenLogout tokenLogout) {
+        deleteRefreshToken(tokenLogout.getRefreshToken(), tokenLogout.getUsername());
+    }
+
 
     private User getUser(final String refreshTokenString) {
         final String userId = jwtHelper.getUserIdFromRefreshToken(refreshTokenString);
@@ -112,15 +126,10 @@ public class AuthenticationService {
 
     public TokenRead refreshToken(final TokenRefresh tokenRefresh) {
         final String refreshTokenString = tokenRefresh.getRefreshToken();
-        if (refreshTokenRepository.existsById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString))) {
-            refreshTokenRepository.deleteById(jwtHelper.getTokenIdFromRefreshToken(refreshTokenString));
-            final User user = getUser(refreshTokenString);
-            final RefreshToken refreshToken = createRefreshToken(user);
-            final String accessToken = jwtHelper.generateAccessToken(user);
-            final String newRefreshTokenString = jwtHelper.generateRefreshToken(user, refreshToken);
-            log.debug("Tokens refreshed successfully for user [username: {}]", user.getUsername());
-            return new TokenRead(user.getId(), accessToken, newRefreshTokenString);
-        }
-        throw new BadCredentialsException("Invalid token");
+        deleteRefreshToken(refreshTokenString, tokenRefresh.getUsername());
+        final User user = getUser(refreshTokenString);
+        final TokenRead tokens = createTokens(user);
+        log.debug("Tokens refreshed successfully for user [username: {}]", user.getUsername());
+        return tokens;
     }
 }

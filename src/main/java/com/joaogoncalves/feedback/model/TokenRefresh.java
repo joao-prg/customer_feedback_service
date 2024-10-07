@@ -15,8 +15,8 @@ import javax.validation.constraints.NotNull;
 public class TokenRefresh {
 
     @NotNull
-    @NotBlank(message = "User ID cannot be blank")
-    private String userId;
+    @NotBlank(message = "Username cannot be blank")
+    private String username;
 
     @NotNull
     @NotBlank(message = "Access token cannot be blank")

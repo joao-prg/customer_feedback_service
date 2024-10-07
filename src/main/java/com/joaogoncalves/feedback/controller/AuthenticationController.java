@@ -33,9 +33,7 @@ public class AuthenticationController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> login(@Valid @RequestBody final UserLogin userLogin) {
         log.info("User [username: {}] is logging in", userLogin.getUsername());
-        return ResponseEntity.ok(
-                authenticationService.login(userLogin)
-        );
+        return ResponseEntity.ok(authenticationService.login(userLogin));
     }
 
     @PostMapping(path = "/signup", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
@@ -48,7 +46,7 @@ public class AuthenticationController {
     @PostMapping(path ="/logout", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<?> logout(@Valid @RequestBody TokenLogout tokenLogout) {
-        log.info("User [ID: {}] is logging out", tokenLogout.getUserId());
+        log.info("User [username: {}] is logging out", tokenLogout.getUsername());
         authenticationService.logout(tokenLogout);
         return ResponseEntity.noContent().build();
     }
@@ -56,9 +54,7 @@ public class AuthenticationController {
     @PostMapping(path = "/refresh-token", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefresh tokenRefresh) {
-        log.info("User [ID: {}] is refreshing token", tokenRefresh.getUserId());
-        return ResponseEntity.ok(
-                authenticationService.refreshToken(tokenRefresh)
-        );
+        log.info("User [username: {}] is refreshing token", tokenRefresh.getUsername());
+        return ResponseEntity.ok(authenticationService.refreshToken(tokenRefresh));
     }
 }
