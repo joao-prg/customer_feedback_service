@@ -5,7 +5,9 @@ import com.joaogoncalves.feedback.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,12 +22,17 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Slf4j
 public class AccessTokenFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtHelper jwtHelper;
+
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver exceptionResolver;
 
     @Autowired
     private UserRepository userRepository;
@@ -48,22 +55,26 @@ public class AccessTokenFilter extends OncePerRequestFilter {
                 return;
             }
         }
-        final String accessToken = parseAccessToken(request);
-        final String userId = jwtHelper.getUserIdFromAccessToken(accessToken);
-        final User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        String.format("User not found! [Id: %s]", userId)
-                ));
-        final UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(
-                user,
-                null,
-                user.getAuthorities()
-        );
-        upat.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(upat);
-        log.info("User authenticated and set in the security context [username: {}]", user.getUsername());
-        filterChain.doFilter(request, response);
+        try {
+            final String accessToken = parseAccessToken(request);
+            final String userId = jwtHelper.getUserIdFromAccessToken(accessToken);
+            final User user = userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            String.format("User not found! [Id: %s]", userId)
+                    ));
+            final UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(
+                    user,
+                    null,
+                    user.getAuthorities()
+            );
+            upat.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(upat);
+            log.info("User authenticated and set in the security context [username: {}]", user.getUsername());
+            filterChain.doFilter(request, response);
+        } catch (BadCredentialsException | AuthenticationCredentialsNotFoundException e) {
+            exceptionResolver.resolveException(request, response, null, e);
+        }
     }
 
     private String parseAccessToken(@NotNull final HttpServletRequest request) {

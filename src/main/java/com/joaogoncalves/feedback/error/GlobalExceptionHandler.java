@@ -1,6 +1,5 @@
 package com.joaogoncalves.feedback.error;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.joaogoncalves.feedback.exception.FeedbackNotFoundException;
 import com.joaogoncalves.feedback.exception.UserAlreadyExistsException;
 import com.joaogoncalves.feedback.exception.UserNotAuthorOfFeedbackException;
@@ -76,13 +75,6 @@ public class GlobalExceptionHandler {
         log.warn("AuthenticationException: {}", ex.getMessage(), ex);
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(value = {JWTVerificationException.class})
-    public ResponseEntity<ErrorResponse> handleJWTVerificationException(JWTVerificationException ex) {
-        log.warn("JWTVerificationException: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN.value(), ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(value = {UserNotAuthorOfFeedbackException.class})

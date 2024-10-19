@@ -16,6 +16,13 @@ plugins {
     id "io.freefair.lombok" version "8.6"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+
 group = 'com.joaogoncalves.feedback'
 version = '0.1-SNAPSHOT'
 

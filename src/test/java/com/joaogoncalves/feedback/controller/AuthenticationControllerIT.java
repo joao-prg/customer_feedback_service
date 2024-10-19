@@ -101,7 +101,7 @@ public class AuthenticationControllerIT {
         return Stream.of(
                 Arguments.of(
                         new TokenLogout("test", invalidJWT, invalidJWT),
-                        "Invalid token",
+                        "Invalid refresh token",
                         HttpStatus.UNAUTHORIZED
                 ),
                 Arguments.of(
@@ -126,7 +126,7 @@ public class AuthenticationControllerIT {
         return Stream.of(
                 Arguments.of(
                         new TokenRefresh("test", invalidJWT, invalidJWT),
-                        "Invalid token",
+                        "Invalid refresh token",
                         HttpStatus.UNAUTHORIZED
                 ),
                 Arguments.of(

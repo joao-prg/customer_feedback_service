@@ -3,11 +3,13 @@ package com.joaogoncalves.feedback.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.joaogoncalves.feedback.entity.RefreshToken;
 import com.joaogoncalves.feedback.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -48,7 +50,7 @@ public class JwtHelper {
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(new Date().getTime() + accessTokenExpirationMs))
                 .sign(accessTokenAlgorithm);
-        log.debug("Generated access token for user [ID: {}]", user.getId());
+        log.debug("Generated access token for user [username: {}]", user.getUsername());
         return token;
     }
 
@@ -60,16 +62,24 @@ public class JwtHelper {
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date((new Date()).getTime() + refreshTokenExpirationMs))
                 .sign(refreshTokenAlgorithm);
-        log.debug("Generated refresh token for user [ID: {}]", user.getId());
+        log.debug("Generated refresh token for user [username: {}]", user.getUsername());
         return token;
     }
 
     private DecodedJWT decodeAccessToken(final String token) {
-        return accessTokenVerifier.verify(token);
+        try {
+            return accessTokenVerifier.verify(token);
+        } catch (JWTVerificationException ex) {
+            throw new BadCredentialsException("Invalid access token");
+        }
     }
 
     private DecodedJWT decodeRefreshToken(final String token) {
-        return refreshTokenVerifier.verify(token);
+        try {
+            return refreshTokenVerifier.verify(token);
+        } catch (JWTVerificationException ex) {
+            throw new BadCredentialsException("Invalid refresh token");
+        }
     }
 
     public String getUserIdFromAccessToken(final String token) {
