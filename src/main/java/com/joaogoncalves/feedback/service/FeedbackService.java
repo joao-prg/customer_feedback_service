@@ -49,6 +49,21 @@ public class FeedbackService {
         return recipe;
     }
 
+    private boolean userIsAuthorOfFeedback(final Feedback feedback) {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String currentUsername = authentication.getName();
+        if (!feedback.getUser().getUsername().equals(currentUsername)) {
+            throw new UserNotAuthorOfFeedbackException(
+                    String.format(
+                            "User %s is not the author of the feedback [Id: %s]",
+                            currentUsername,
+                            feedback.getId()
+                    )
+            );
+        }
+        return true;
+    }
+
     public FeedbackRead create(final FeedbackCreate feedbackCreate) {
         final User user = userRepository.findByUsername(feedbackCreate.getUser())
                 .orElseThrow(() -> new FeedbackNotFoundException(
@@ -68,27 +83,21 @@ public class FeedbackService {
 
     public FeedbackRead update(final String id, final FeedbackUpdate feedbackUpdate) {
         final Feedback feedback = find(id);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        if (!feedback.getUser().getUsername().equals(currentUsername)) {
-            throw new UserNotAuthorOfFeedbackException(
-                    String.format(
-                            "User %s is not the author of the feedback [Id: %s]",
-                            currentUsername,
-                            id
-                    )
-            );
+        if (userIsAuthorOfFeedback(feedback)) {
+            modelMapper.map(feedbackUpdate, feedback);
+            final Feedback updatedFeeback = feedbackRepository.save(feedback);
+            log.debug("Feedback updated successfully [ID: {}]", id);
+            return modelMapper.map(updatedFeeback, FeedbackRead.class);
         }
-        modelMapper.map(feedbackUpdate, feedback);
-        final Feedback updatedFeeback = feedbackRepository.save(feedback);
-        log.debug("Feedback updated successfully [ID: {}]", id);
-        return modelMapper.map(updatedFeeback, FeedbackRead.class);
+        return null;
     }
 
     public void delete(final String id) {
         final Feedback feedback = find(id);
-        feedbackRepository.delete(feedback);
-        log.debug(String.format("Recipe deleted successfully [ID: %s]", id));
+        if (userIsAuthorOfFeedback(feedback)) {
+            feedbackRepository.delete(feedback);
+            log.debug("Feedback deleted successfully [ID: {}]", id);
+        }
     }
 
     public FeedbackListRead search(final int page,

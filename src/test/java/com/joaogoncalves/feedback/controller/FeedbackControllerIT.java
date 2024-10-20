@@ -223,6 +223,32 @@ public class FeedbackControllerIT {
         );
     }
 
+    Stream<Arguments> provideFeedbackDeletesWithError() {
+        return Stream.of(
+                Arguments.of(
+                        "4b437406-abf0-459a-a22f-5c65f1cf102a",
+                        invalidJWT,
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Invalid access token"
+                ),
+                Arguments.of(
+                        "dec7fcec-5b86-43ae-902f-83180dd37cf1",
+                        jwtTokens[0],
+                        HttpStatus.NOT_FOUND.value(),
+                        "Feedback not found! [Id: dec7fcec-5b86-43ae-902f-83180dd37cf1]"
+                ),
+                Arguments.of(
+                        createdFeedbackId,
+                        jwtTokens[1],
+                        HttpStatus.FORBIDDEN.value(),
+                        String.format(
+                                "User test2 is not the author of the feedback [Id: %s]",
+                                createdFeedbackId
+                        )
+                )
+        );
+    }
+
     @Test
     @Order(1)
     public void testFeedbackCreate() {
@@ -365,5 +391,34 @@ public class FeedbackControllerIT {
                 .body("message",equalTo(expectedExceptionMessage));
     }
 
+    @ParameterizedTest
+    @Order(7)
+    @MethodSource("provideFeedbackDeletesWithError")
+    public void testFeedbackDeleteWithError(final String id,
+                                            final String token,
+                                            final int expectedStatusCode,
+                                            final String expectedExceptionMessage) {
+        given()
+                .auth()
+                .oauth2(token)
+                .pathParam("id", id)
+                .when()
+                .delete("/api/feedbacks/{id}")
+                .then()
+                .statusCode(expectedStatusCode)
+                .body("message",equalTo(expectedExceptionMessage));
+    }
 
+    @Test
+    @Order(8)
+    public void testFeedbackDelete() {
+        given()
+                .auth()
+                .oauth2(jwtTokens[0])
+                .pathParam("id", createdFeedbackId)
+                .when()
+                .delete("/api/feedbacks/{id}")
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+    }
 }
