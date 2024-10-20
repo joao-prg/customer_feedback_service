@@ -62,8 +62,8 @@ public class FeedbackService {
     }
 
     public FeedbackRead read(final String id) {
-        final Feedback recipe = find(id);
-        return modelMapper.map(recipe, FeedbackRead.class);
+        final Feedback feedback = find(id);
+        return modelMapper.map(feedback, FeedbackRead.class);
     }
 
     public FeedbackRead update(final String id, final FeedbackUpdate feedbackUpdate) {

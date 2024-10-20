@@ -20,13 +20,13 @@ public class UserLogin {
 
     @ApiModelProperty(notes = "User's username")
     @NotNull
-    @NotBlank(message = "Username cannot be blank")
-    @Size(max = 30)
+    @NotBlank
+    @Size(min = 1, max = 30)
     private String username;
 
     @ApiModelProperty(notes = "User's password")
     @NotNull
-    @NotBlank(message = "Password cannot be blank")
+    @NotBlank
     @Size(min = 8, max=30)
     private String password;
 }

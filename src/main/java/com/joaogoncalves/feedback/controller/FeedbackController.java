@@ -39,7 +39,7 @@ public class FeedbackController {
 
     @PostMapping(path="/new", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Void> create(@RequestBody @Valid FeedbackCreate feedbackCreate) {
+    public ResponseEntity<URI> create(@RequestBody @Valid FeedbackCreate feedbackCreate) {
         log.info(
                 "User [username: {}] is creating feedback for product [product: {}]",
                 feedbackCreate.getUser(),

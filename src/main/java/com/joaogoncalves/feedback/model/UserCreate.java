@@ -21,19 +21,19 @@ public class UserCreate {
 
     @ApiModelProperty(notes = "User's username")
     @NotNull
-    @NotBlank(message = "Username cannot be blank")
-    @Size(max = 30)
+    @NotBlank
+    @Size(min = 1, max = 30)
     private String username;
 
     @ApiModelProperty(notes = "User's e-mail")
     @NotNull
-    @NotBlank(message = "Email cannot be blank")
+    @NotBlank
     @Email(message = "Invalid email format")
     private String email;
 
     @ApiModelProperty(notes = "User's password")
     @NotNull
-    @NotBlank(message = "Password cannot be blank")
+    @NotBlank
     @Size(min = 8, max=30)
     private String password;
 }

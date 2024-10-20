@@ -9,9 +9,11 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -28,6 +30,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EnableTestContainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class AuthenticationControllerIT {
 
@@ -52,7 +55,7 @@ public class AuthenticationControllerIT {
                 ),
                 Arguments.of(
                         new UserLogin("", "testtest"),
-                        "username: Username cannot be blank",
+                        "username: must not be blank; username: size must be between 1 and 30",
                         HttpStatus.BAD_REQUEST
                 ),
                 Arguments.of(
@@ -62,7 +65,12 @@ public class AuthenticationControllerIT {
                 ),
                 Arguments.of(
                         new UserLogin("test",  ""),
-                        "password: Password cannot be blank; password: size must be between 8 and 30",
+                        "password: must not be blank; password: size must be between 8 and 30",
+                        HttpStatus.BAD_REQUEST
+                ),
+                Arguments.of(
+                        new UserLogin("test",  TestUtils.generateBigString.get()),
+                        "password: size must be between 8 and 30",
                         HttpStatus.BAD_REQUEST
                 )
         );
@@ -76,7 +84,7 @@ public class AuthenticationControllerIT {
                 ),
                 Arguments.of(
                         new UserCreate("","test@test.com", "testtest"),
-                        "username: Username cannot be blank"
+                        "username: must not be blank; username: size must be between 1 and 30"
                 ),
                 Arguments.of(
                         new UserCreate("test", "testtest.com", "testtest"),
@@ -84,7 +92,7 @@ public class AuthenticationControllerIT {
                 ),
                 Arguments.of(
                         new UserCreate("test","", "testtest"),
-                        "email: Email cannot be blank"
+                        "email: must not be blank"
                 ),
                 Arguments.of(
                         new UserCreate("test","test@test.com", "testtes"),
@@ -92,7 +100,7 @@ public class AuthenticationControllerIT {
                 ),
                 Arguments.of(
                         new UserCreate("test", "test@test.com", ""),
-                        "password: Password cannot be blank; password: size must be between 8 and 30"
+                        "password: must not be blank; password: size must be between 8 and 30"
                 )
         );
     }
